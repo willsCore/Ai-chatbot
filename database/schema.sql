@@ -27,3 +27,16 @@ CREATE TABLE IF NOT EXISTS chat_history (
 );
 
 
+
+-- Created a logs table to keep track of user
+CREATE TABLE IF NOT EXISTS logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NULL,
+  event_type VARCHAR(30) NOT NULL,
+  path VARCHAR(100) NOT NULL,
+  method VARCHAR(10) NOT NULL,
+  status_code SMALLINT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_logs_user(user_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
