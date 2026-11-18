@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv #Helper module to access secret keys in program
 import mysql.connector
 from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
 
 
 load_dotenv()
@@ -41,10 +42,8 @@ def check_required(data, fields):
             return f"{field} is required"
     return None
 
-@app.route("/api/health", methods=['GET'])
-def health_check():
-    """Health check: confirms the server is running"""
-    return jsonify({"status": "ok"}), 200
+
+
 
 @app.route("/api/signup", methods=["POST"])
 def signup():
@@ -90,6 +89,38 @@ def signup():
         # Runs on success and on failure, so connections never pile up
         cursor.close()
         conn.close()
+
+@app.route("/api/signin", methods=['POST'])
+def signin():
+    """Sign a user in with name and password."""
+    data = request.get_json(silent=True) or {}
+
+    error = check_required(data, ["name", "password"])
+    if error:
+        return jsonify({"error": error}), 400
+
+    name = clean_text(data, "name")
+    password = data.get("password")
+
+    
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "SELECT id, name, password_hash FROM users WHERE name = %s",
+            (name,),
+        )
+        row = cursor.fetchone()
+
+        if row is None or not check_password_hash(row["password_hash"], password):
+            return jsonify({"error": "Invalid Name or password"}), 401
+
+        return jsonify({"message": "Signed in"}), 200
+    finally:
+        cursor.close()
+        conn.close()
+
+
 
 if __name__ =="__main__":
     app.run(debug=True)
