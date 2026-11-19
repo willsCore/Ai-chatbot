@@ -5,11 +5,13 @@ from dotenv import load_dotenv #Helper module to access secret keys in program
 import mysql.connector
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
-
+import jwt
+from datetime import datetime, timedelta, timezone
 
 load_dotenv()
 
 openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+JWT_SECRET = os.getenv("JWT_SECRET")
 
 #database configuration loaded from .env
 ai_chatbot_db_config = {
@@ -113,9 +115,15 @@ def signin():
         row = cursor.fetchone()
 
         if row is None or not check_password_hash(row["password_hash"], password):
-            return jsonify({"error": "Invalid Name or password"}), 401
+            return jsonify({"error": "Invalid name or password"}), 401
 
-        return jsonify({"message": "Signed in"}), 200
+        #Create on token on signin
+        token = jwt.encode(
+            {"sub": str(row["id"]), "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
+            JWT_SECRET,
+            algorithm="HS256",
+        )
+        return jsonify({"message": "Signed in", "token": token}), 200
     finally:
         cursor.close()
         conn.close()
