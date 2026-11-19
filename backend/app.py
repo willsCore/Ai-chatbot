@@ -44,7 +44,24 @@ def check_required(data, fields):
             return f"{field} is required"
     return None
 
+def get_current_user_id():
+    """Return the user id from the Bearer token, or None if missing or invalid."""
+    header = request.headers.get("Authorization", "")
+    if not header.startswith("Bearer "):
+        return None
+    token = header[len("Bearer "):]
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        return int(payload["sub"])
+    except jwt.InvalidTokenError:
+        return None
 
+@app.route("/api/me", methods=["GET"])
+def me():
+    user_id = get_current_user_id()
+    if user_id is None:
+        return jsonify({"error": "Authentication required"}), 401
+    return jsonify({"user_id": user_id}), 200
 
 
 @app.route("/api/signup", methods=["POST"])
