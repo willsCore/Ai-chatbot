@@ -146,8 +146,23 @@ def signin():
         cursor.close()
         conn.close()
 
+@app.route("/api/chat", methods=['POST'])
+def chat():
+    user_id = get_current_user_id()
+    if user_id is None:
+        return jsonify({"error": "Authentication required"}), 401
+    
 
+    data = request.get_json(silent=True) or {}
+    message= clean_text(data, "message")
+    if not message:
+        return({"error":"Message is required"}), 400
 
+    if len(message) > 2000:
+        return({"error":"Message is too long"}), 400
+
+    return jsonify({"reply": "Validation passed"}), 200
+    
 if __name__ =="__main__":
     app.run(debug=True)
     
