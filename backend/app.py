@@ -7,6 +7,7 @@ from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 import jwt
 from datetime import datetime, timedelta, timezone
+from persona import BOT_PERSONA
 
 load_dotenv()
 
