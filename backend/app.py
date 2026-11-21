@@ -146,8 +146,11 @@ def signin():
         cursor.close()
         conn.close()
 
+
+
 @app.route("/api/chat", methods=['POST'])
 def chat():
+    """Send a message to the AI bot and return its reply."""
     user_id = get_current_user_id()
     if user_id is None:
         return jsonify({"error": "Authentication required"}), 401
@@ -156,12 +159,27 @@ def chat():
     data = request.get_json(silent=True) or {}
     message= clean_text(data, "message")
     if not message:
-        return({"error":"Message is required"}), 400
+        return jsonify({"error":"Message is required"}), 400
 
     if len(message) > 2000:
-        return({"error":"Message is too long"}), 400
+        return jsonify({"error":"Message is too long"}), 400
 
-    return jsonify({"reply": "Validation passed"}), 200
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "SELECT role, content FROM chat_history WHERE user_id = %s ORDER BY created_at DESC, id DESC LIMIT 10",
+            (user_id,),
+        )
+        rows = cursor.fetchall()
+        rows.reverse()
+        history = [{"role": r["role"], "content": r["content"]} for r in rows]
+
+        return jsonify({"history": history}), 200
+    finally:
+        cursor.close()
+        conn.close()
+
     
 if __name__ =="__main__":
     app.run(debug=True)
