@@ -262,6 +262,18 @@ def history():
 
 
 
+@app.route("/api/signout", methods=["POST"])
+def signout():
+    """Record that the signed-in user signed out."""
+    user_id = get_current_user_id()
+    if user_id is None:
+        return jsonify({"error": "Authentication required"}), 401
+
+    write_log(user_id, "logout", 200)
+    return jsonify({"message": "Signed out"}), 200
+
+
+
 if __name__ =="__main__":
     app.run(debug=True)
     
