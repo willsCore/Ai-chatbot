@@ -1,5 +1,6 @@
 
 from flask import Flask, jsonify, request
+import requests
 import os
 from dotenv import load_dotenv #Helper module to access secret keys in program
 import mysql.connector
@@ -13,6 +14,7 @@ load_dotenv()
 
 openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
 JWT_SECRET = os.getenv("JWT_SECRET")
+openrouter_model = os.getenv("OPENROUTER_MODEL")
 
 #database configuration loaded from .env
 ai_chatbot_db_config = {
@@ -175,7 +177,33 @@ def chat():
         rows.reverse()
         history = [{"role": r["role"], "content": r["content"]} for r in rows]
 
-        return jsonify({"history": history}), 200
+        messages = [{"role": "system", "content": BOT_PERSONA}] + history
+        messages.append({"role": "user", "content": message})
+
+        try:
+            resp = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {openrouter_api_key}", 
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": openrouter_model, 
+                    "messages": messages
+                },
+                timeout=30,
+            )
+            resp.raise_for_status()
+            reply = resp.json()["choices"][0]["message"]["content"]
+
+        except (requests.RequestException, KeyError, IndexError) as exc:
+            print("OpenRouter error:", repr(exc))
+            print("Response body:", getattr(getattr(exc, "response", None), "text", None))
+            return jsonify({"error": "AI service unavailable"}), 502
+        return jsonify({"reply": reply}), 200
+        
+
+    
     finally:
         cursor.close()
         conn.close()
