@@ -219,8 +219,7 @@ def chat():
             reply = resp.json()["choices"][0]["message"]["content"]
 
         except (requests.RequestException, KeyError, IndexError) as exc:
-            print("OpenRouter error:", repr(exc))
-            print("Response body:", getattr(getattr(exc, "response", None), "text", None))
+            write_log(user_id, "chat", 502)
             return jsonify({"error": "AI service unavailable"}), 502
         
         cursor.executemany(
@@ -231,6 +230,7 @@ def chat():
             ],
         )
         conn.commit()
+        write_log(user_id, "chat", 200)
         return jsonify({"reply": reply}), 200
             
     finally:
