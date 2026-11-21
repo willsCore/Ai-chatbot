@@ -59,6 +59,23 @@ def get_current_user_id():
     except jwt.InvalidTokenError:
         return None
 
+def write_log(user_id, event_type, status_code):
+    """Record one event. Never raises, so a logging failure can't break a request."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                "INSERT INTO logs (user_id, event_type, path, method, status_code) VALUES (%s, %s, %s, %s, %s)",
+                (user_id, event_type, request.path, request.method, status_code),
+            )
+            conn.commit()
+        finally:
+            cursor.close()
+            conn.close()
+    except mysql.connector.Error as exc:
+        print("Audit log failed:", repr(exc))
+
 @app.route("/api/me", methods=["GET"])
 def me():
     user_id = get_current_user_id()
@@ -134,16 +151,21 @@ def signin():
         )
         row = cursor.fetchone()
 
+        #Create on token on signin
+
         if row is None or not check_password_hash(row["password_hash"], password):
+            write_log(None, "login_failed", 401)
             return jsonify({"error": "Invalid name or password"}), 401
 
-        #Create on token on signin
         token = jwt.encode(
             {"sub": str(row["id"]), "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
             JWT_SECRET,
             algorithm="HS256",
         )
+
+        write_log(row["id"], "login", 200)
         return jsonify({"message": "Signed in", "token": token}), 200
+
     finally:
         cursor.close()
         conn.close()
@@ -239,7 +261,7 @@ def history():
 
 
 
-    
+
 if __name__ =="__main__":
     app.run(debug=True)
     
