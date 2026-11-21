@@ -215,6 +215,30 @@ def chat():
         cursor.close()
         conn.close()
 
+@app.route("/api/history", methods=["GET"])
+def history():
+    """Return the signed-in user's orders, oldest first."""
+    user_id = get_current_user_id()
+    if user_id is None:
+        return jsonify({"error": "Authentication required"}), 401
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "SELECT id, role, content, created_at FROM chat_history WHERE user_id = %s ORDER BY created_at ASC, id ASC",
+            (user_id,),
+        )
+        rows = cursor.fetchall()
+        for row in rows:
+            row["created_at"] = row["created_at"].isoformat()
+        return jsonify({"messages": rows}), 200
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
     
 if __name__ =="__main__":
     app.run(debug=True)
