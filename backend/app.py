@@ -1,5 +1,6 @@
 
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import requests
 import os
 from dotenv import load_dotenv #Helper module to access secret keys in program
@@ -30,6 +31,7 @@ def get_connection():
 
 
 app = Flask(__name__)
+CORS(app, origins=["http://localhost:3000"])
 
 
 def clean_text(data, field):
