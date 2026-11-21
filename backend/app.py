@@ -200,10 +200,17 @@ def chat():
             print("OpenRouter error:", repr(exc))
             print("Response body:", getattr(getattr(exc, "response", None), "text", None))
             return jsonify({"error": "AI service unavailable"}), 502
-        return jsonify({"reply": reply}), 200
         
-
-    
+        cursor.executemany(
+            "INSERT INTO chat_history (user_id, role, content) VALUES (%s, %s, %s)",
+            [
+                (user_id, "user", message),
+                (user_id, "assistant", reply),
+            ],
+        )
+        conn.commit()
+        return jsonify({"reply": reply}), 200
+            
     finally:
         cursor.close()
         conn.close()
