@@ -1,4 +1,7 @@
 <script setup>
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+
 const config = useRuntimeConfig()
 const token = useCookie('chatbot_token')
 const toast = useToast()
@@ -8,6 +11,10 @@ const input = ref('')
 
 if (!token.value) {
   await navigateTo('/signin')
+}
+
+function toHtml(text){
+    return DOMPurify.sanitize(marked.parse(text))
 }
 
 async function send() {
@@ -39,19 +46,22 @@ async function send() {
 <template>
   <div class="max-w-2xl mx-auto mt-6 px-4">
     <div class="space-y-3 mb-4">
-      <div 
-        v-for="(m, i) in messages" 
+      <div
+        v-for="(m, i) in messages"
         :key="i"
         class="flex"
         :class="m.role === 'user' ? 'justify-end' : 'justify-start'"
-      >
-            <div
+        >
+        <div
             class="max-w-[80%] rounded-2xl px-4 py-2"
-            :class="m.role === 'user' ? 'bg-primary text-white' : 'bg-muted'"
-            >
-            {{ m.content }}
-            </div>
-      </div>
+            :class="m.role === 'user'
+            ? 'bg-primary text-white'
+            : 'bg-muted [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_h3]:font-semibold [&_p]:my-2'"
+        >
+            <div v-if="m.role === 'assistant'" v-html="toHtml(m.content)" />
+            <span v-else>{{ m.content }}</span>
+        </div>
+        </div>
     </div>
 
     <div class="flex gap-2">
