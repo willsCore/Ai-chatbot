@@ -45,7 +45,8 @@ async function send() {
 
 <template>
   <div class="max-w-2xl mx-auto mt-6 px-4">
-    <div class="space-y-3 mb-4">
+    ```vue
+<div class="space-y-3 mb-4">
       <div
         v-for="(m, i) in messages"
         :key="i"
@@ -56,13 +57,14 @@ async function send() {
             class="max-w-[80%] rounded-2xl px-4 py-2"
             :class="m.role === 'user'
             ? 'bg-primary text-white'
-            : 'bg-muted [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_h3]:font-semibold [&_p]:my-2'"
+            : 'bg-muted'"
         >
-            <div v-if="m.role === 'assistant'" v-html="toHtml(m.content)" />
+            <div v-if="m.role === 'assistant'" v-html="toHtml(m.content)" class="markdown"/>
             <span v-else>{{ m.content }}</span>
         </div>
         </div>
     </div>
+```
 
     <div class="flex gap-2">
       <UInput v-model="input" class="flex-1" placeholder="Type a message" @keydown.enter="send" />
@@ -70,3 +72,22 @@ async function send() {
     </div>
   </div>
 </template>
+
+
+<style scoped>
+.markdown > :deep(* + *) { margin-top: 0.75rem; }
+.markdown :deep(h1),
+.markdown :deep(h2),
+.markdown :deep(h3),
+.markdown :deep(h4) { font-weight: 600; margin-top: 1.25rem; }
+.markdown :deep(h2) { font-size: 1.125rem; }
+.markdown :deep(ul) { list-style: disc; padding-left: 1.25rem; }
+.markdown :deep(ol) { list-style: decimal; padding-left: 1.25rem; }
+.markdown :deep(li + li) { margin-top: 0.25rem; }
+.markdown :deep(table) { display: block; overflow-x: auto; border-collapse: collapse; font-size: 0.875rem; }
+.markdown :deep(th),
+.markdown :deep(td) { border: 1px solid var(--ui-border); padding: 0.375rem 0.625rem; text-align: left; }
+.markdown :deep(th) { font-weight: 600; }
+.markdown :deep(code) { background: var(--ui-bg-elevated); padding: 0 0.25rem; border-radius: 0.25rem; }
+.markdown :deep(pre) { overflow-x: auto; padding: 0.75rem; background: var(--ui-bg-elevated); border-radius: 0.5rem; }
+</style>
