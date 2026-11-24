@@ -34,8 +34,18 @@ async function send() {
 <template>
   <div class="max-w-2xl mx-auto mt-6 px-4">
     <div class="space-y-3 mb-4">
-      <div v-for="(m, i) in messages" :key="i">
-        <p>{{ m.role }}: {{ m.content }}</p>
+      <div 
+        v-for="(m, i) in messages" 
+        :key="i"
+        class="flex"
+        :class="m.role === 'user' ? 'justify-end' : 'justify-start'"
+      >
+            <div
+            class="max-w-[80%] rounded-2xl px-4 py-2"
+            :class="m.role === 'user' ? 'bg-primary text-white' : 'bg-muted'"
+            >
+            {{ m.content }}
+            </div>
       </div>
     </div>
 
