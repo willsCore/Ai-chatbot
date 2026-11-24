@@ -24,7 +24,12 @@ async function send() {
     messages.value.push({ role: 'assistant', content: res.reply })
     input.value = ''
   } catch (err) {
-    toast.add({ title: err.data?.error || 'Something went wrong', color: 'error' })
+        if (err.status === 401) {
+            token.value = null
+            await navigateTo('/signin')
+            return
+        }
+        toast.add({ title: err.data?.error || 'Something went wrong', color: 'error' })
   } finally {
     sending.value = false
   }
